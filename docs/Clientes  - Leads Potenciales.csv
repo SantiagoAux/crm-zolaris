@@ -1,0 +1,4 @@
+Fecha,Nombre,Telefono,Ubicacion,Motivo,Tipo Alerta,Valor Propuesta,Potencia,Ahorro,Beneficios,Paneles,Produccion Anual
+2026-02-19 8:57,Cliente,573229132643,Pasto,Cliente Potencial detectado (>300 kWh),OPORTUNIDAD VENTA,$15.422.149,3.71 kWp,$287.58,$6.168.860,6,4.948 kWh/año
+2026-02-19 10:22,Cliente 2,573104517149,Pasto,Cliente Potencial detectado (>300 kWh),OPORTUNIDAD VENTA,"$53,122,120.00",12.78 kWp,991700,21248848,18,17031
+2026-02-19 11:33,Jhon,573150593888,Medellín,Cliente Potencial detectado (>300 kWh),OPORTUNIDAD VENTA,"$42,564,843.00",10.24 kWp,"$760,000","$17,025,937",15,"15,938 kWh"
