@@ -1,6 +1,10 @@
 import { Lead, ETAPAS, EtapaKey } from "@/types/crm";
 import { useClientes } from "@/hooks/useClientes";
-import { BarChart3, TrendingUp, Zap, Sun, Loader2 } from "lucide-react";
+import { BarChart3, TrendingUp, Zap, Sun, Loader2, PieChart as PieIcon, Activity } from "lucide-react";
+import {
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Legend
+} from 'recharts';
 
 const formatCOP = (value: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
@@ -23,6 +27,32 @@ const Reportes = () => {
   const totalPaneles = leads.reduce((s, l) => s + l.paneles, 0);
 
   const etapaKeys = Object.keys(ETAPAS) as EtapaKey[];
+
+  // Data for Pie Chart
+  const pieData = etapaKeys.map(key => ({
+    name: ETAPAS[key].label,
+    value: leads.filter(l => l.etapa === key).length,
+    valorEconomico: leads.filter(l => l.etapa === key).reduce((s, l) => s + l.valorPropuesta, 0),
+    color: key === 'cierre_ganado' ? '#10b981' :
+      key === 'cierre_perdido' ? '#ef4444' :
+        key === 'negociacion' ? '#f59e0b' :
+          key === 'cotizacion' ? '#fbbf24' : '#3b82f6'
+  })).filter(d => d.value > 0);
+
+  // Data for Frequency Polygon (Line Chart) - Value per Month
+  const dataByMonth = leads.reduce<Record<string, number>>((acc, l) => {
+    const month = l.fecha.substring(0, 7); // YYYY-MM
+    acc[month] = (acc[month] || 0) + l.valorPropuesta;
+    return acc;
+  }, {});
+
+  const lineData = Object.entries(dataByMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, valor]) => ({
+      month,
+      valor,
+      displayMonth: new Date(month + "-01").toLocaleDateString('es-CO', { month: 'short', year: '2-digit' })
+    }));
 
   const byCity = leads.reduce<Record<string, { count: number; valor: number }>>((acc, l) => {
     if (!acc[l.ubicacion]) acc[l.ubicacion] = { count: 0, valor: 0 };
@@ -54,9 +84,85 @@ const Reportes = () => {
         ))}
       </div>
 
-      {/* Pipeline Breakdown */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Pie Chart */}
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <PieIcon className="h-5 w-5 text-accent" />
+            <h3 className="font-display text-lg font-semibold text-foreground">Distribución por Etapa</h3>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <RechartsTooltip
+                  formatter={(value: number, name: string, props: any) => [
+                    `${value} leads (${formatCOP(props.payload.valorEconomico)})`,
+                    name
+                  ]}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Line Chart */}
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Activity className="h-5 w-5 text-accent" />
+            <h3 className="font-display text-lg font-semibold text-foreground">Valor de Proyectos por Mes</h3>
+          </div>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={lineData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                <XAxis
+                  dataKey="displayMonth"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  tickFormatter={(value) => `$${value / 1000000}M`}
+                />
+                <RechartsTooltip
+                  formatter={(value: number) => [formatCOP(value), "Valor Total"]}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="valor"
+                  stroke="hsl(var(--accent))"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: 'hsl(var(--accent))', strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+                  activeDot={{ r: 6, strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Pipeline Breakdown (Mini Table) */}
       <div className="rounded-lg border border-border bg-card p-5">
-        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">Distribución por Etapa</h3>
+        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">Resumen Numérico</h3>
         <div className="space-y-3">
           {etapaKeys.map((etapa) => {
             const items = leads.filter((l) => l.etapa === etapa);
