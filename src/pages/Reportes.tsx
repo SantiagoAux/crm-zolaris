@@ -48,11 +48,16 @@ const Reportes = () => {
 
   const lineData = Object.entries(dataByMonth)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, valor]) => ({
-      month,
-      valor,
-      displayMonth: new Date(month + "-01").toLocaleDateString('es-CO', { month: 'short', year: '2-digit' })
-    }));
+    .map(([month, valor]) => {
+      const [year, m] = month.split('-');
+      const date = new Date(parseInt(year), parseInt(m) - 1, 1);
+      const monthName = date.toLocaleDateString('es-CO', { month: 'long' });
+      return {
+        month,
+        valor,
+        displayMonth: `${monthName} de ${year}`
+      };
+    });
 
   const byCity = leads.reduce<Record<string, { count: number; valor: number }>>((acc, l) => {
     if (!acc[l.ubicacion]) acc[l.ubicacion] = { count: 0, valor: 0 };
