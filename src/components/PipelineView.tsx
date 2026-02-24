@@ -13,7 +13,7 @@ const PipelineView = ({ leads, onSelect, onEtapaChange }: PipelineViewProps) => 
   const etapas = Object.keys(ETAPAS) as EtapaKey[];
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
       {etapas.map((etapa) => {
         const items = leads.filter((l) => l.etapa === etapa);
         const total = items.reduce((s, l) => s + l.valorPropuesta, 0);

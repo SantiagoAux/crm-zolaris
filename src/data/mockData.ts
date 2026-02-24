@@ -63,7 +63,7 @@ export const mockLeads: Lead[] = [
     beneficios: 11400000,
     paneles: 11,
     produccionAnual: "10,200 kWh/año",
-    etapa: "cierre",
+    etapa: "cierre_ganado",
   },
   {
     id: "5",
