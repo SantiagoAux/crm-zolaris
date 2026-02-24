@@ -43,21 +43,29 @@ const Reportes = () => {
   const dataByMonth = leads.reduce<Record<string, number>>((acc, l) => {
     if (!l.fecha) return acc;
 
-    let date: Date;
+    let year: number, month: number;
     // Handle YYYY-MM-DD or YYYY-MM-DD HH:MM
     if (l.fecha.includes('-')) {
       const parts = l.fecha.split(' ')[0].split('-');
-      date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+      year = parseInt(parts[0]);
+      month = parseInt(parts[1]) - 1;
     }
     // Handle DD/MM/YYYY
     else if (l.fecha.includes('/')) {
       const parts = l.fecha.split(' ')[0].split('/');
-      date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, 1);
+      const day = parseInt(parts[0]); // 'day' variable is introduced but not used for the Date object, which is fine.
+      month = parseInt(parts[1]) - 1;
+      year = parseInt(parts[2]);
+      if (year < 100) year += 2000; // Handle 2-digit years
     }
     else {
-      date = new Date(l.fecha);
+      const d = new Date(l.fecha);
+      if (isNaN(d.getTime())) return acc;
+      year = d.getFullYear();
+      month = d.getMonth();
     }
 
+    const date = new Date(year, month, 1);
     if (isNaN(date.getTime())) return acc;
 
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -66,15 +74,16 @@ const Reportes = () => {
   }, {});
 
   const lineData = Object.entries(dataByMonth)
-    .sort(([a], [b]) => a.localeCompare(b)) // Sort by YYYY-MM
-    .map(([month, valor]) => {
-      const [year, m] = month.split('-');
-      const date = new Date(parseInt(year), parseInt(m) - 1, 1);
-      const monthName = date.toLocaleDateString('es-CO', { month: 'long' });
+    .sort((a, b) => a[0].localeCompare(b[0])) // Strict alphabetical sort on YYYY-MM
+    .map(([monthKey, valor]) => {
+      const [y, m] = monthKey.split('-');
+      const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+      const monthName = d.toLocaleDateString('es-CO', { month: 'long' });
+      const capitalizedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
       return {
-        month,
+        month: monthKey,
         valor,
-        displayMonth: `${monthName} de ${year}`
+        displayMonth: `${capitalizedMonth} de ${y}`
       };
     });
 
