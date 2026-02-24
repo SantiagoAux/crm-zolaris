@@ -48,7 +48,7 @@ const HEADERS = [
 ];
 
 /** Etapas válidas del pipeline */
-const ETAPAS_VALIDAS = ["contacto", "cotizacion", "negociacion", "cierre"];
+const ETAPAS_VALIDAS = ["contacto", "cotizacion", "negociacion", "cierre_ganado", "cierre_perdido"];
 
 // ─── MENÚ PERSONALIZADO ──────────────────────────────────────────────────────
 
@@ -356,7 +356,7 @@ function abrirFormularioCrear() {
 
   const etapaPrompt = ui.prompt(
     "➕ Nuevo Cliente",
-    "Etapa del pipeline:\n[contacto | cotizacion | negociacion | cierre]",
+    "Etapa del pipeline:\n[contacto | cotizacion | negociacion | cierre_ganado | cierre_perdido]",
     ui.ButtonSet.OK_CANCEL
   );
   if (etapaPrompt.getSelectedButton() !== ui.Button.OK) return;
@@ -663,7 +663,7 @@ function editarClienteSeleccionado() {
     { key: "produccionAnual", label: "Producción Anual",    actual: leadActual.produccionAnual },
     {
       key: "etapa",
-      label: "Etapa [contacto|cotizacion|negociacion|cierre]",
+      label: "Etapa [contacto|cotizacion|negociacion|cierre_ganado|cierre_perdido]",
       actual: leadActual.etapa,
     },
     { key: "notas",         label: "Notas",                 actual: leadActual.notas },
@@ -1200,7 +1200,8 @@ function getHtmlContent() {
 '  .badge-contacto { background: #164e63; color: #38bdf8; }\n' +
 '  .badge-cotizacion { background: #451a03; color: #f59e0b; }\n' +
 '  .badge-negociacion { background: #312e81; color: #a78bfa; }\n' +
-'  .badge-cierre { background: #14532d; color: #34d399; }\n' +
+'  .badge-cierre_ganado { background: #14532d; color: #34d399; }\n' +
+'  .badge-cierre_perdido { background: #450a0a; color: #f87171; }\n' +
 '  .actions-cell { display: flex; gap: 6px; }\n' +
 '  .icon-btn { background: none; border: 1px solid #2d4a6a; border-radius: 5px; color: #64748b; cursor: pointer; padding: 4px 8px; font-size: 13px; transition: all 0.15s; }\n' +
 '  .icon-btn:hover.edit { color: #38bdf8; border-color: #38bdf8; }\n' +
@@ -1243,7 +1244,8 @@ function getHtmlContent() {
 '  <div class="kpi"><div class="kpi-label">En Contacto</div><div class="kpi-val blue" id="kContacto">—</div></div>\n' +
 '  <div class="kpi"><div class="kpi-label">Cotización</div><div class="kpi-val" id="kCotizacion">—</div></div>\n' +
 '  <div class="kpi"><div class="kpi-label">Negociación</div><div class="kpi-val" id="kNegociacion">—</div></div>\n' +
-'  <div class="kpi"><div class="kpi-label">Cierre</div><div class="kpi-val green" id="kCierre">—</div></div>\n' +
+'  <div class="kpi"><div class="kpi-label">Cierre Ganado</div><div class="kpi-val green" id="kCierreGanado">—</div></div>\n' +
+'  <div class="kpi"><div class="kpi-label">Cierre Perdido</div><div class="kpi-val red" id="kCierrePerdido">—</div></div>\n' +
 '</div>\n' +
 '\n' +
 '<div class="toolbar">\n' +
@@ -1253,7 +1255,8 @@ function getHtmlContent() {
 '    <option value="contacto">Contacto</option>\n' +
 '    <option value="cotizacion">Cotización</option>\n' +
 '    <option value="negociacion">Negociación</option>\n' +
-'    <option value="cierre">Cierre</option>\n' +
+'    <option value="cierre_ganado">Cierre Ganado</option>\n' +
+'    <option value="cierre_perdido">Cierre Perdido</option>\n' +
 '  </select>\n' +
 '  <select class="filter-select" id="filterCiudad" onchange="filtrarTabla()">\n' +
 '    <option value="">Todas las ciudades</option>\n' +
@@ -1296,7 +1299,8 @@ function getHtmlContent() {
 '          <option value="contacto">Contacto</option>\n' +
 '          <option value="cotizacion">Cotización</option>\n' +
 '          <option value="negociacion">Negociación</option>\n' +
-'          <option value="cierre">Cierre</option>\n' +
+'          <option value="cierre_ganado">Cierre Ganado</option>\n' +
+'          <option value="cierre_perdido">Cierre Perdido</option>\n' +
 '        </select>\n' +
 '      </div>\n' +
 '      <div class="form-group"><label>Valor Propuesta (COP)</label><input id="fValor" type="number" placeholder="15422149"></div>\n' +
@@ -1339,11 +1343,11 @@ function getHtmlContent() {
 '  }\n' +
 '\n' +
 '  function badgeClass(etapa) {\n' +
-'    var map = { contacto:"badge-contacto", cotizacion:"badge-cotizacion", negociacion:"badge-negociacion", cierre:"badge-cierre" };\n' +
+'    var map = { contacto:"badge-contacto", cotizacion:"badge-cotizacion", negociacion:"badge-negociacion", cierre_ganado:"badge-cierre_ganado", cierre_perdido:"badge-cierre_perdido" };\n' +
 '    return "badge " + (map[etapa] || "badge-contacto");\n' +
 '  }\n' +
 '  function etapaLabel(e) {\n' +
-'    var map = { contacto:"Contacto", cotizacion:"Cotizacion", negociacion:"Negociacion", cierre:"Cierre" };\n' +
+'    var map = { contacto:"Contacto", cotizacion:"Cotizacion", negociacion:"Negociacion", cierre_ganado:"Cierre Ganado", cierre_perdido:"Cierre Perdido" };\n' +
 '    return map[e] || e;\n' +
 '  }\n' +
 '\n' +
@@ -1387,7 +1391,8 @@ function getHtmlContent() {
 '      document.getElementById("kContacto").textContent = k.porEtapa.contacto || 0;\n' +
 '      document.getElementById("kCotizacion").textContent = k.porEtapa.cotizacion || 0;\n' +
 '      document.getElementById("kNegociacion").textContent = k.porEtapa.negociacion || 0;\n' +
-'      document.getElementById("kCierre").textContent = k.porEtapa.cierre || 0;\n' +
+'      document.getElementById("kCierreGanado").textContent = k.porEtapa.cierre_ganado || 0;\n' +
+'      document.getElementById("kCierrePerdido").textContent = k.porEtapa.cierre_perdido || 0;\n' +
 '    });\n' +
 '  }\n' +
 '\n' +
