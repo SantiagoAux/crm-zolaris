@@ -41,13 +41,32 @@ const Reportes = () => {
 
   // Data for Frequency Polygon (Line Chart) - Value per Month
   const dataByMonth = leads.reduce<Record<string, number>>((acc, l) => {
-    const month = l.fecha.substring(0, 7); // YYYY-MM
-    acc[month] = (acc[month] || 0) + l.valorPropuesta;
+    if (!l.fecha) return acc;
+
+    let date: Date;
+    // Handle YYYY-MM-DD or YYYY-MM-DD HH:MM
+    if (l.fecha.includes('-')) {
+      const parts = l.fecha.split(' ')[0].split('-');
+      date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1);
+    }
+    // Handle DD/MM/YYYY
+    else if (l.fecha.includes('/')) {
+      const parts = l.fecha.split(' ')[0].split('/');
+      date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, 1);
+    }
+    else {
+      date = new Date(l.fecha);
+    }
+
+    if (isNaN(date.getTime())) return acc;
+
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    acc[key] = (acc[key] || 0) + l.valorPropuesta;
     return acc;
   }, {});
 
   const lineData = Object.entries(dataByMonth)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => a.localeCompare(b)) // Sort by YYYY-MM
     .map(([month, valor]) => {
       const [year, m] = month.split('-');
       const date = new Date(parseInt(year), parseInt(m) - 1, 1);
