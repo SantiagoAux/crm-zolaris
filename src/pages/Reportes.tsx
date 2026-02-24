@@ -44,22 +44,32 @@ const Reportes = () => {
     if (!l.fecha) return acc;
 
     let year: number, month: number;
-    // Handle YYYY-MM-DD or YYYY-MM-DD HH:MM
-    if (l.fecha.includes('-')) {
-      const parts = l.fecha.split(' ')[0].split('-');
-      year = parseInt(parts[0]);
-      month = parseInt(parts[1]) - 1;
-    }
-    // Handle DD/MM/YYYY
-    else if (l.fecha.includes('/')) {
-      const parts = l.fecha.split(' ')[0].split('/');
-      const day = parseInt(parts[0]); // 'day' variable is introduced but not used for the Date object, which is fine.
-      month = parseInt(parts[1]) - 1;
-      year = parseInt(parts[2]);
-      if (year < 100) year += 2000; // Handle 2-digit years
-    }
-    else {
-      const d = new Date(l.fecha);
+    const dateStr = String(l.fecha);
+
+    // Try a more flexible regex-based parsing
+    const match = dateStr.match(/(\d{1,4})[-/](\d{1,2})[-/](\d{1,4})/);
+    if (match) {
+      const p1 = parseInt(match[1]);
+      const p2 = parseInt(match[2]);
+      const p3 = parseInt(match[3]);
+
+      if (p1 > 1900) { // YYYY-MM-DD
+        year = p1;
+        month = p2 - 1;
+      } else if (p3 > 1900) { // DD-MM-YYYY
+        year = p3;
+        month = p2 - 1;
+      } else if (p3 < 100) { // DD-MM-YY (likely 20xx)
+        year = 2000 + p3;
+        month = p2 - 1;
+      } else {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return acc;
+        year = d.getFullYear();
+        month = d.getMonth();
+      }
+    } else {
+      const d = new Date(dateStr);
       if (isNaN(d.getTime())) return acc;
       year = d.getFullYear();
       month = d.getMonth();
@@ -161,35 +171,41 @@ const Reportes = () => {
             <h3 className="font-display text-lg font-semibold text-foreground">Valor de Proyectos por Mes</h3>
           </div>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={lineData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
-                <XAxis
-                  dataKey="displayMonth"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                  tickFormatter={(value) => `$${value / 1000000}M`}
-                />
-                <RechartsTooltip
-                  formatter={(value: number) => [formatCOP(value), "Valor Total"]}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="valor"
-                  stroke="hsl(var(--accent))"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: 'hsl(var(--accent))', strokeWidth: 2, stroke: 'hsl(var(--card))' }}
-                  activeDot={{ r: 6, strokeWidth: 0 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {lineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={lineData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                  <XAxis
+                    dataKey="displayMonth"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    tickFormatter={(value) => `$${value / 1000000}M`}
+                  />
+                  <RechartsTooltip
+                    formatter={(value: number) => [formatCOP(value), "Valor Total"]}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="valor"
+                    stroke="hsl(var(--accent))"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: 'hsl(var(--accent))', strokeWidth: 2, stroke: 'hsl(var(--card))' }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center rounded-md border border-dashed border-border bg-muted/10 text-sm text-muted-foreground">
+                No hay datos históricos para graficar
+              </div>
+            )}
           </div>
         </div>
       </div>
