@@ -69,7 +69,8 @@ const Reportes = () => {
     if (isNaN(date.getTime())) return acc;
 
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    acc[key] = (acc[key] || 0) + l.valorPropuesta;
+    const value = Number(l.valorPropuesta) || 0;
+    acc[key] = (acc[key] || 0) + value;
     return acc;
   }, {});
 
