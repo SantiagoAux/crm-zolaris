@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Shield, LogIn, Loader2 } from "lucide-react";
+import { Sun, LogIn, Loader2 } from "lucide-react";
 
 const Login = () => {
     const { user, login } = useAuth();
@@ -46,8 +46,8 @@ const Login = () => {
 
             <div className="relative w-full max-w-[400px] animate-fade-in">
                 <div className="mb-8 flex flex-col items-center text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent shadow-lg shadow-accent/20">
-                        <Shield className="h-10 w-10 text-primary" />
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-solar shadow-lg shadow-accent/20">
+                        <Sun className="h-10 w-10 text-primary" />
                     </div>
                     <h1 className="font-display text-3xl font-bold tracking-tight text-white">ZOLARIS CRM</h1>
                     <p className="mt-2 text-sm text-slate-400">Introduce tus credenciales para acceder</p>
