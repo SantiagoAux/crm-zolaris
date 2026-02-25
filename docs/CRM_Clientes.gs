@@ -23,7 +23,7 @@
 // ─── CONSTANTES ─────────────────────────────────────────────────────────────
 
 /** Nombre exacto de la hoja en el Spreadsheet */
-const SHEET_NAME = "Clientes - Leads Potenciales";
+const SHEET_NAME = "Leads Potenciales";
 const USUARIOS_SHEET_NAME = "Usuarios";
 
 /** Encabezados de usuarios */
@@ -44,8 +44,8 @@ const HEADERS = [
   "Paneles",
   "Produccion Anual",
   "Etapa",
-  "Notas",
   "Embajador",
+  "Notas",
 ];
 
 /** Etapas válidas del pipeline */
@@ -165,8 +165,8 @@ function _rowToLead(row, rowIndex) {
     paneles: parseInt(row[10]) || 0,
     produccionAnual: row[11] ? row[11].toString() : "",
     etapa: row[12] ? row[12].toString().toLowerCase() : "contacto",
-    notas: row[13] ? row[13].toString() : "",
-    embajador: row[14] ? row[14].toString() : "",
+    embajador: row[13] ? row[13].toString() : "",
+    notas: row[14] ? row[14].toString() : "",
   };
 }
 
@@ -190,8 +190,8 @@ function _leadToRow(lead) {
     lead.paneles || 0,
     lead.produccionAnual || "",
     lead.etapa || "contacto",
-    lead.notas || "",
     lead.embajador || "",
+    lead.notas || "",
   ];
 }
 
@@ -1579,6 +1579,12 @@ function procesarAccion(payloadJson) {
     var body = JSON.parse(payloadJson);
     var accion = body.accion;
     var datos = body.datos || {};
+
+    if (accion === "crearUsuario") return crearUsuario(datos);
+    if (accion === "actualizarUsuario") return actualizarUsuario(datos.id, datos.changes || datos.cambios);
+    if (accion === "eliminarUsuario") return eliminarUsuario(datos.id);
+    if (accion === "listarUsuarios") return { ok: true, datos: listarUsuarios() };
+    if (accion === "login") return login(datos.email, datos.password);
 
     if (accion === "crear") return crearCliente(datos);
     if (accion === "leerTodos") { var c = leerTodosLosClientes(datos.embajador); return { ok: true, datos: c }; }

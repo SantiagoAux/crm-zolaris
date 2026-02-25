@@ -34,3 +34,9 @@ export const apiListarUsuarios = () =>
 
 export const apiCrearUsuario = (datos: Partial<User> & { password?: string }) =>
     callAuth("crearUsuario", datos);
+
+export const apiActualizarUsuario = (id: string, changes: Partial<User> & { password?: string }) =>
+    callAuth("actualizarUsuario", { id, changes });
+
+export const apiEliminarUsuario = (id: string) =>
+    callAuth("eliminarUsuario", { id });

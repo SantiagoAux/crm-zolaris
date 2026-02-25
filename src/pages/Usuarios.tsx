@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { User, apiListarUsuarios, apiCrearUsuario } from "@/services/apiAuth";
-import { Shield, UserPlus, Mail, User as UserIcon, Loader2, RefreshCw } from "lucide-react";
+import { Shield, UserPlus, Mail, User as UserIcon, Loader2, RefreshCw, Edit, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const Usuarios = () => {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [form, setForm] = useState({ email: "", password: "", nombre: "", rol: "USER" as User["rol"] });
+    const [editForm, setEditForm] = useState({ id: "", email: "", password: "", nombre: "", rol: "USER" as User["rol"], activo: "Si" as User["activo"] });
     const [saving, setSaving] = useState(false);
 
     const fetchUsers = async () => {
@@ -48,6 +51,61 @@ const Usuarios = () => {
         }
     };
 
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            const { apiActualizarUsuario } = await import("@/services/apiAuth");
+            const res = await apiActualizarUsuario(editForm.id, {
+                email: editForm.email,
+                nombre: editForm.nombre,
+                rol: editForm.rol,
+                activo: editForm.activo,
+                ...(editForm.password ? { password: editForm.password } : {})
+            });
+            if (res.ok) {
+                toast({ title: "Éxito", description: "Usuario actualizado" });
+                setEditModalOpen(false);
+                fetchUsers();
+            } else {
+                toast({ title: "Error", description: res.mensaje, variant: "destructive" });
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "Fallo al actualizar", variant: "destructive" });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDeleteUser = async (user: User) => {
+        if (!window.confirm(`¿Estás seguro de eliminar a "${user.nombre}"?`)) return;
+        try {
+            const { apiEliminarUsuario } = await import("@/services/apiAuth");
+            const res = await apiEliminarUsuario(user.id);
+            if (res.ok) {
+                toast({ title: "Eliminado", description: "Usuario borrado correctamente" });
+                fetchUsers();
+            } else {
+                toast({ title: "Error", description: res.mensaje, variant: "destructive" });
+            }
+        } catch (e) {
+            toast({ title: "Error", description: "No se pudo eliminar", variant: "destructive" });
+        }
+    };
+
+    const openEdit = (u: User) => {
+        setEditingUser(u);
+        setEditForm({
+            id: u.id,
+            email: u.email,
+            password: "",
+            nombre: u.nombre,
+            rol: u.rol,
+            activo: u.activo
+        });
+        setEditModalOpen(true);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -78,8 +136,8 @@ const Usuarios = () => {
                                     <UserIcon className="h-5 w-5" />
                                 </div>
                                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${u.rol === "ADMIN" ? "bg-amber-500/10 text-amber-500" :
-                                        u.rol === "EMBAJADOR" ? "bg-purple-500/10 text-purple-500" :
-                                            "bg-blue-500/10 text-blue-500"
+                                    u.rol === "EMBAJADOR" ? "bg-purple-500/10 text-purple-500" :
+                                        "bg-blue-500/10 text-blue-500"
                                     }`}>
                                     {u.rol}
                                 </span>
@@ -91,11 +149,21 @@ const Usuarios = () => {
                                     {u.email}
                                 </div>
                             </div>
-                            <div className="mt-4 flex items-center gap-2 border-t border-border pt-4">
-                                <div className={`h-2 w-2 rounded-full ${u.activo === "Si" ? "bg-emerald-500" : "bg-rose-500"}`} />
-                                <span className="text-xs font-medium text-muted-foreground">
-                                    {u.activo === "Si" ? "Cuenta Activa" : "Desactivado"}
-                                </span>
+                            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-2 w-2 rounded-full ${u.activo === "Si" ? "bg-emerald-500" : "bg-rose-500"}`} />
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                        {u.activo === "Si" ? "Activo" : "Inactivo"}
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button onClick={() => openEdit(u)} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-accent">
+                                        <Edit className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button onClick={() => handleDeleteUser(u)} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-rose-500">
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -161,6 +229,82 @@ const Usuarios = () => {
                                     className="rounded-lg bg-accent px-6 py-2 text-sm font-bold text-primary hover:opacity-90 disabled:opacity-50"
                                 >
                                     {saving ? "Creando..." : "Crear Usuario"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Modal Editar Usuario */}
+            {editModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm p-4" onClick={() => setEditModalOpen(false)}>
+                    <div className="w-full max-w-md rounded-xl border border-border bg-card shadow-2xl animate-fade-in" onClick={e => e.stopPropagation()}>
+                        <div className="gradient-navy p-5">
+                            <h3 className="flex items-center gap-2 font-display text-lg font-bold text-primary-foreground">
+                                <Shield className="h-5 w-5" />
+                                Editar Usuario: {editingUser?.nombre}
+                            </h3>
+                        </div>
+                        <form onSubmit={handleUpdate} className="space-y-4 p-6">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Nombre Completo</label>
+                                <input
+                                    required
+                                    value={editForm.nombre}
+                                    onChange={e => setEditForm({ ...editForm, nombre: e.target.value })}
+                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Email / Usuario</label>
+                                <input
+                                    required
+                                    value={editForm.email}
+                                    onChange={e => setEditForm({ ...editForm, email: e.target.value })}
+                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Nueva Contraseña (dejar vacío para no cambiar)</label>
+                                <input
+                                    type="password"
+                                    value={editForm.password}
+                                    onChange={e => setEditForm({ ...editForm, password: e.target.value })}
+                                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Rol</label>
+                                    <select
+                                        value={editForm.rol}
+                                        onChange={e => setEditForm({ ...editForm, rol: e.target.value as any })}
+                                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                    >
+                                        <option value="USER">User</option>
+                                        <option value="EMBAJADOR">Embajador</option>
+                                        <option value="ADMIN">Admin</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Estado</label>
+                                    <select
+                                        value={editForm.activo}
+                                        onChange={e => setEditForm({ ...editForm, activo: e.target.value as any })}
+                                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                    >
+                                        <option value="Si">Activo</option>
+                                        <option value="No">Desactivado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4">
+                                <button type="button" onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-sm font-medium text-muted-foreground">Cancelar</button>
+                                <button
+                                    disabled={saving}
+                                    className="rounded-lg bg-accent px-6 py-2 text-sm font-bold text-primary hover:opacity-90 disabled:opacity-50"
+                                >
+                                    {saving ? "Guardando..." : "Guardar Cambios"}
                                 </button>
                             </div>
                         </form>

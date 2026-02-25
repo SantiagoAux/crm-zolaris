@@ -37,6 +37,12 @@ const Login = () => {
 
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
                     <form onSubmit={handleSubmit} className="p-8">
+                        {/* Hidden bait fields for aggressive browser autofill tools */}
+                        <div style={{ display: "none" }}>
+                            <input type="text" name="fake-username" autoComplete="off" />
+                            <input type="password" name="fake-password" autoComplete="off" />
+                        </div>
+
                         <div className="space-y-5">
                             <div className="space-y-2">
                                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 ml-1">
@@ -44,6 +50,7 @@ const Login = () => {
                                 </label>
                                 <input
                                     type="text"
+                                    name="user_email_crm"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -59,11 +66,12 @@ const Login = () => {
                                 </label>
                                 <input
                                     type="password"
+                                    name="user_pass_crm"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    autoComplete="off"
+                                    autoComplete="new-password"
                                     className="w-full rounded-xl border border-white/5 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-accent/50 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all"
                                 />
                             </div>
