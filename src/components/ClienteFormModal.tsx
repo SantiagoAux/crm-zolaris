@@ -281,26 +281,29 @@ export function ClienteFormModal({ open, lead, onClose, onSave }: ClienteFormMod
                         />
                     </div>
 
-                    {/* Embajador */}
-                    {ambassadors.length > 0 && (
-                        <div className="col-span-2 flex flex-col gap-1">
-                            <label className="text-xs font-semibold uppercase text-muted-foreground">
-                                Embajador Asignado
-                            </label>
-                            <select
-                                value={form.embajador}
-                                onChange={(e) => set("embajador", e.target.value)}
-                                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                            >
-                                <option value="">Sin asignar (Admin)</option>
-                                {ambassadors.map((a) => (
-                                    <option key={a.nombre} value={a.nombre}>
-                                        {a.nombre}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
+                    {/* Embajador (Visible para ADMIN) */}
+                    <div className="col-span-2 flex flex-col gap-1">
+                        <label className="text-xs font-semibold uppercase text-muted-foreground">
+                            Embajador Asignado
+                        </label>
+                        <select
+                            value={form.embajador}
+                            onChange={(e) => set("embajador", e.target.value)}
+                            className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="">Sin asignar (Admin)</option>
+                            {ambassadors.map((a) => (
+                                <option key={a.nombre} value={a.nombre}>
+                                    {a.nombre}
+                                </option>
+                            ))}
+                        </select>
+                        {ambassadors.length === 0 && (
+                            <p className="text-[10px] text-muted-foreground italic">
+                                * Nota: No se encontraron embajadores activos o cargando lista...
+                            </p>
+                        )}
+                    </div>
 
                     {/* Botones */}
                     <div className="col-span-2 flex justify-end gap-3 border-t border-border pt-4">

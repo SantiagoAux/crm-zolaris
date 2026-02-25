@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Sun, LogIn, Loader2 } from "lucide-react";
+import { Shield, LogIn, Loader2 } from "lucide-react";
 
 const Login = () => {
     const { user, login } = useAuth();
@@ -9,6 +9,13 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [isReadonly, setIsReadonly] = useState(true);
+    const [passType, setPassType] = useState<"text" | "password">("text");
+
+    // Static random names for the current session component mount
+    const [fieldNames] = useState(() => ({
+        user: `u_${Math.random().toString(36).substring(7)}`,
+        pass: `p_${Math.random().toString(36).substring(7)}`
+    }));
 
     // Force clear and unlock on mount
     useEffect(() => {
@@ -39,19 +46,19 @@ const Login = () => {
 
             <div className="relative w-full max-w-[400px] animate-fade-in">
                 <div className="mb-8 flex flex-col items-center text-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-solar shadow-lg shadow-accent/20">
-                        <Sun className="h-10 w-10 text-primary" />
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent shadow-lg shadow-accent/20">
+                        <Shield className="h-10 w-10 text-primary" />
                     </div>
                     <h1 className="font-display text-3xl font-bold tracking-tight text-white">ZOLARIS CRM</h1>
                     <p className="mt-2 text-sm text-slate-400">Introduce tus credenciales para acceder</p>
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
-                    <form onSubmit={handleSubmit} className="p-8">
+                    <form onSubmit={handleSubmit} className="p-8" autoComplete="off">
                         {/* Hidden bait fields for aggressive browser autofill tools */}
-                        <div style={{ display: "none" }}>
-                            <input type="text" name="fake-username" autoComplete="off" />
-                            <input type="password" name="fake-password" autoComplete="off" />
+                        <div style={{ display: "none" }} aria-hidden="true">
+                            <input type="text" name="fake-username" autoComplete="off" tabIndex={-1} />
+                            <input type="password" name="fake-password" autoComplete="off" tabIndex={-1} />
                         </div>
 
                         <div className="space-y-5">
@@ -61,14 +68,14 @@ const Login = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    name="user_email_crm"
+                                    name={fieldNames.user}
                                     required
                                     readOnly={isReadonly}
                                     onFocus={(e) => (e.target.readOnly = false)}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="MONOZAM"
-                                    autoComplete="off"
+                                    placeholder="Ingresa tu usuario"
+                                    autoComplete="new-password"
                                     className="w-full rounded-xl border border-white/5 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-accent/50 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all"
                                 />
                             </div>
@@ -78,11 +85,14 @@ const Login = () => {
                                     Contraseña
                                 </label>
                                 <input
-                                    type="password"
-                                    name="user_pass_crm"
+                                    type={passType}
+                                    name={fieldNames.pass}
                                     required
                                     readOnly={isReadonly}
-                                    onFocus={(e) => (e.target.readOnly = false)}
+                                    onFocus={(e) => {
+                                        e.target.readOnly = false;
+                                        setPassType("password");
+                                    }}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
@@ -118,5 +128,7 @@ const Login = () => {
         </div>
     );
 };
+
+export default Login;
 
 export default Login;
