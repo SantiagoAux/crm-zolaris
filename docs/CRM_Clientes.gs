@@ -1082,7 +1082,7 @@ function _ejecutarAccion(accion, datos) {
     if (accion === "crearUsuario") return crearUsuario(datos);
     if (accion === "listarUsuarios") return { ok: true, datos: listarUsuarios() };
     if (accion === "crear") return crearCliente(datos);
-    if (accion === "leerTodos") { var c = leerTodosLosClientes(datosInput.embajador); return { ok: true, datos: c }; }
+    if (accion === "leerTodos") { var c = leerTodosLosClientes(datos.embajador); return { ok: true, datos: c }; }
     if (accion === "buscarNombre") { var r = buscarClientesPorNombre(datos.nombre); return { ok: true, datos: r }; }
     if (accion === "leerFila") { var lead = leerClientePorFila(datos.fila); return { ok: !!lead, datos: lead }; }
     if (accion === "actualizar") return actualizarCliente(datos.fila, datos.cambios);

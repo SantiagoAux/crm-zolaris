@@ -48,6 +48,7 @@ const Login = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="MONOZAM"
+                                    autoComplete="off"
                                     className="w-full rounded-xl border border-white/5 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-accent/50 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all"
                                 />
                             </div>
@@ -62,6 +63,7 @@ const Login = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
+                                    autoComplete="off"
                                     className="w-full rounded-xl border border-white/5 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-accent/50 focus:outline-none focus:ring-4 focus:ring-accent/10 transition-all"
                                 />
                             </div>

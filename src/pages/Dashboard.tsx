@@ -10,8 +10,8 @@ const Dashboard = () => {
   const { leads, loading } = useClientes();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  // 5 leads más recientes
-  const recentLeads = leads.slice(0, 5);
+  // 10 leads más recientes (los últimos de la lista, invertidos para que el más nuevo esté primero)
+  const recentLeads = [...leads].reverse().slice(0, 10);
 
   return (
     <div className="space-y-6">
