@@ -77,7 +77,10 @@ const Usuarios = () => {
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
                                     <UserIcon className="h-5 w-5" />
                                 </div>
-                                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${u.rol === "ADMIN" ? "bg-amber-500/10 text-amber-500" : "bg-blue-500/10 text-blue-500"}`}>
+                                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${u.rol === "ADMIN" ? "bg-amber-500/10 text-amber-500" :
+                                        u.rol === "EMBAJADOR" ? "bg-purple-500/10 text-purple-500" :
+                                            "bg-blue-500/10 text-blue-500"
+                                    }`}>
                                     {u.rol}
                                 </span>
                             </div>
@@ -143,10 +146,11 @@ const Usuarios = () => {
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">Rol de Acceso</label>
                                 <select
                                     value={form.rol}
-                                    onChange={e => setForm({ ...form, rol: e.target.value as "USER" | "ADMIN" })}
+                                    onChange={e => setForm({ ...form, rol: e.target.value as any })}
                                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                                 >
                                     <option value="USER">Usuario (CRM)</option>
+                                    <option value="EMBAJADOR">Embajador (Ventas)</option>
                                     <option value="ADMIN">Administrador (Total)</option>
                                 </select>
                             </div>

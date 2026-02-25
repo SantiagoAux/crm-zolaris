@@ -45,6 +45,7 @@ const HEADERS = [
   "Produccion Anual",
   "Etapa",
   "Notas",
+  "Embajador",
 ];
 
 /** Etapas válidas del pipeline */
@@ -128,6 +129,7 @@ function inicializarHoja() {
   sheet.setColumnWidth(12, 150); // Produccion Anual
   sheet.setColumnWidth(13, 110); // Etapa
   sheet.setColumnWidth(14, 220); // Notas
+  sheet.setColumnWidth(15, 160); // Embajador
 
   SpreadsheetApp.getUi().alert("✅ Hoja inicializada correctamente.");
 }
@@ -164,6 +166,7 @@ function _rowToLead(row, rowIndex) {
     produccionAnual: row[11] ? row[11].toString() : "",
     etapa: row[12] ? row[12].toString().toLowerCase() : "contacto",
     notas: row[13] ? row[13].toString() : "",
+    embajador: row[14] ? row[14].toString() : "",
   };
 }
 
@@ -188,6 +191,7 @@ function _leadToRow(lead) {
     lead.produccionAnual || "",
     lead.etapa || "contacto",
     lead.notas || "",
+    lead.embajador || "",
   ];
 }
 
@@ -383,23 +387,26 @@ function abrirFormularioCrear() {
 // ─── READ ────────────────────────────────────────────────────────────────────
 
 /**
- * Lee TODOS los clientes de la hoja.
- *
- * @returns {Object[]} Array de objetos Lead (con _fila como número de fila).
- *
- * @example
- *   const clientes = leerTodosLosClientes();
- *   Logger.log(clientes.length); // → 6
+ * Lee todos los clientes de la hoja.
+ * @param {string} filtroEmbajador - Opcional: email/nombre del embajador para filtrar.
+ * @returns {Object[]} Lista de leads.
  */
-function leerTodosLosClientes() {
+function leerTodosLosClientes(filtroEmbajador) {
   const sheet = getSheet();
   const ultimaFila = sheet.getLastRow();
-  if (ultimaFila < 2) return []; // Solo headers o vacío
+  if (ultimaFila < 2) return [];
 
   const datos = sheet.getRange(2, 1, ultimaFila - 1, HEADERS.length).getValues();
-  return datos
-    .map((row, i) => _rowToLead(row, i + 2))
-    .filter((lead) => lead.nombre.trim() !== ""); // Ignorar filas vacías
+  let leads = datos.map((fila, i) => _rowToLead(fila, i + 2));
+
+  // Ignorar filas vacías (leads con nombre vacío)
+  leads = leads.filter((lead) => lead.nombre.trim() !== "");
+
+  if (filtroEmbajador) {
+    return leads.filter(l => l.embajador && l.embajador.toLowerCase() === filtroEmbajador.toLowerCase());
+  }
+  
+  return leads;
 }
 
 /**
@@ -1075,7 +1082,7 @@ function _ejecutarAccion(accion, datos) {
     if (accion === "crearUsuario") return crearUsuario(datos);
     if (accion === "listarUsuarios") return { ok: true, datos: listarUsuarios() };
     if (accion === "crear") return crearCliente(datos);
-    if (accion === "leerTodos") { var c = leerTodosLosClientes(); return { ok: true, datos: c }; }
+    if (accion === "leerTodos") { var c = leerTodosLosClientes(datosInput.embajador); return { ok: true, datos: c }; }
     if (accion === "buscarNombre") { var r = buscarClientesPorNombre(datos.nombre); return { ok: true, datos: r }; }
     if (accion === "leerFila") { var lead = leerClientePorFila(datos.fila); return { ok: !!lead, datos: lead }; }
     if (accion === "actualizar") return actualizarCliente(datos.fila, datos.cambios);
@@ -1109,7 +1116,7 @@ function doPost(e) {
     if (accion === "crear") {
       resultado = crearCliente(datos);
     } else if (accion === "leerTodos") {
-      var clientes = leerTodosLosClientes();
+      var clientes = leerTodosLosClientes(datos.embajador);
       resultado = { ok: true, datos: clientes };
     } else if (accion === "buscarNombre") {
       var res = buscarClientesPorNombre(datos.nombre);
@@ -1574,7 +1581,7 @@ function procesarAccion(payloadJson) {
     var datos = body.datos || {};
 
     if (accion === "crear") return crearCliente(datos);
-    if (accion === "leerTodos") { var c = leerTodosLosClientes(); return { ok: true, datos: c }; }
+    if (accion === "leerTodos") { var c = leerTodosLosClientes(datos.embajador); return { ok: true, datos: c }; }
     if (accion === "buscarNombre") { var r = buscarClientesPorNombre(datos.nombre); return { ok: true, datos: r }; }
     if (accion === "leerFila") { var lead = leerClientePorFila(datos.fila); return { ok: !!lead, datos: lead }; }
     if (accion === "actualizar") return actualizarCliente(datos.fila, datos.cambios);

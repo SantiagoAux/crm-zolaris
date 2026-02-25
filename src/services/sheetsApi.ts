@@ -57,9 +57,9 @@ export async function apiPing(): Promise<ApiResult> {
     return callSheets("ping");
 }
 
-/** Obtiene todos los clientes de la hoja */
-export async function apiLeerTodos(): Promise<Lead[]> {
-    const res = await callSheets("leerTodos");
+/** Obtiene todos los clientes de la hoja, opcionalmente filtrados por embajador */
+export async function apiLeerTodos(embajador?: string): Promise<Lead[]> {
+    const res = await callSheets("leerTodos", { embajador });
     if (!res.ok) throw new Error(res.mensaje ?? "Error al leer clientes");
     return (res.datos as Lead[]) ?? [];
 }

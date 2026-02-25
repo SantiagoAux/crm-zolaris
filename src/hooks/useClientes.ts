@@ -8,6 +8,7 @@ import {
     apiActualizarEtapa,
 } from "@/services/sheetsApi";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 export interface UseClientesReturn {
     leads: Lead[];
@@ -21,6 +22,7 @@ export interface UseClientesReturn {
 }
 
 export function useClientes(): UseClientesReturn {
+    const { user } = useAuth();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,10 @@ export function useClientes(): UseClientesReturn {
         setLoading(true);
         setError(null);
         try {
-            const data = await apiLeerTodos();
+            // Si el usuario es EMBAJADOR, solo pedimos sus leads
+            const embajadorFilter = user?.rol === "EMBAJADOR" ? user.nombre : undefined;
+            const data = await apiLeerTodos(embajadorFilter);
+
             // Enrich with synthetic id for React keys (use _fila cast via unknown)
             const enriched = data.map((l) => ({
                 ...l,
@@ -43,7 +48,7 @@ export function useClientes(): UseClientesReturn {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => {
         refetch();

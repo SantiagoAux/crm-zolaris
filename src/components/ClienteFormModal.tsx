@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Lead, ETAPAS, EtapaKey } from "@/types/crm";
 import { X } from "lucide-react";
+import { User } from "@/services/apiAuth";
 
 interface ClienteFormModalProps {
     open: boolean;
@@ -24,11 +25,29 @@ const EMPTY: Omit<Lead, "id"> = {
     produccionAnual: "",
     etapa: "contacto",
     notas: [],
+    embajador: "",
 };
 
 export function ClienteFormModal({ open, lead, onClose, onSave }: ClienteFormModalProps) {
     const [form, setForm] = useState<Omit<Lead, "id">>(EMPTY);
     const [saving, setSaving] = useState(false);
+    const [ambassadors, setAmbassadors] = useState<{ nombre: string }[]>([]);
+
+    useEffect(() => {
+        const fetchAmbassadors = async () => {
+            try {
+                const { apiListarUsuarios } = await import("@/services/apiAuth");
+                const res = await apiListarUsuarios();
+                if (res.ok && res.datos && Array.isArray(res.datos)) {
+                    const filtered = (res.datos as User[]).filter(u => u.rol === "EMBAJADOR");
+                    setAmbassadors(filtered);
+                }
+            } catch (e) {
+                console.error("Error fetching ambassadors:", e);
+            }
+        };
+        if (open) fetchAmbassadors();
+    }, [open]);
 
     useEffect(() => {
         if (lead) {
@@ -47,6 +66,7 @@ export function ClienteFormModal({ open, lead, onClose, onSave }: ClienteFormMod
                 produccionAnual: lead.produccionAnual,
                 etapa: lead.etapa,
                 notas: lead.notas ?? [],
+                embajador: lead.embajador ?? "",
             });
         } else {
             setForm(EMPTY);
@@ -260,6 +280,27 @@ export function ClienteFormModal({ open, lead, onClose, onSave }: ClienteFormMod
                             className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                     </div>
+
+                    {/* Embajador */}
+                    {ambassadors.length > 0 && (
+                        <div className="col-span-2 flex flex-col gap-1">
+                            <label className="text-xs font-semibold uppercase text-muted-foreground">
+                                Embajador Asignado
+                            </label>
+                            <select
+                                value={form.embajador}
+                                onChange={(e) => set("embajador", e.target.value)}
+                                className="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                                <option value="">Sin asignar (Admin)</option>
+                                {ambassadors.map((a) => (
+                                    <option key={a.nombre} value={a.nombre}>
+                                        {a.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Botones */}
                     <div className="col-span-2 flex justify-end gap-3 border-t border-border pt-4">

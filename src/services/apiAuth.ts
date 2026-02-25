@@ -4,14 +4,14 @@ export interface User {
     id: string;
     email: string;
     nombre: string;
-    rol: "ADMIN" | "USER";
+    rol: "ADMIN" | "USER" | "EMBAJADOR";
     activo: "Si" | "No";
 }
 
 export interface AuthResult {
     ok: boolean;
     mensaje?: string;
-    datos?: User;
+    datos?: User | User[];
 }
 
 async function callAuth(action: string, datos?: object): Promise<AuthResult> {

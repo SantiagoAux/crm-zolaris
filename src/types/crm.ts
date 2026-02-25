@@ -14,6 +14,7 @@ export interface Lead {
   produccionAnual: string;
   etapa: 'contacto' | 'cotizacion' | 'negociacion' | 'cierre_ganado' | 'cierre_perdido';
   notas?: string[];
+  embajador?: string;
 }
 
 export type EtapaKey = Lead['etapa'];
