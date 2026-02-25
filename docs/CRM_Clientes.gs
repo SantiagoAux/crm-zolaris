@@ -1092,11 +1092,6 @@ function _ejecutarAccion(accion, datos) {
   }
 }
 
-      .createTextOutput(JSON.stringify({ ok: false, mensaje: "Error servidor: " + err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
 // ─── HTML DE LA WEB APP ──────────────────────────────────────────────────────
 
 /**
