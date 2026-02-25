@@ -1040,47 +1040,41 @@ function cargarDatosEjemplo() {
 
 // ─── WEB APP ENTRY POINTS ────────────────────────────────────────────────────
 
-/**
- * Punto de entrada HTTP GET para la Web App.
- * Desplegar en: Implementar → Nueva implementación → Aplicación web
- * Acceso: Cualquiera (o "Solo yo" según necesidad)
- *
- * @param {Object} e - Evento de solicitud GET.
- * @returns {HtmlOutput} Página HTML del CRM.
- */
 function doGet(e) {
-  // ── Modo API: llamada desde la app React via GET con ?action=xxx ──
   if (e && e.parameter && e.parameter.action) {
     var action = e.parameter.action;
     var datosInput = {};
     if (e.parameter.datos) {
       try { datosInput = JSON.parse(e.parameter.datos); } catch (_) {}
     }
-    
-    // Llamamos directo a la lógica de negocio pasando el objeto
     var resultado = _ejecutarAccion(action, datosInput);
-    
-    return ContentService
-      .createTextOutput(JSON.stringify(resultado))
-      .setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify(resultado)).setMimeType(ContentService.MimeType.JSON);
   }
-
-  // ── Modo interfaz HTML (acceso directo desde el navegador) ──
   return HtmlService.createHtmlOutput(getHtmlContent())
     .setTitle("CRM Solar - Clientes")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag("viewport", "width=device-width, initial-scale=1");
 }
 
-/**
- * Función interna unificada para ejecutar acciones CRUD.
- */
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    var resultado = _ejecutarAccion(body.action || body.accion, body.datos || {});
+    return ContentService.createTextOutput(JSON.stringify(resultado)).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, mensaje: "Error POST: " + err.message })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 function _ejecutarAccion(accion, datos) {
   try {
-    if (accion === "ping") return { ok: true, mensaje: "Pong!", timestamp: new Date().toISOString() };
+    if (accion === "ping") return { ok: true, mensaje: "Pong!" };
     if (accion === "login") return login(datos.email, datos.password);
     if (accion === "crearUsuario") return crearUsuario(datos);
+    if (accion === "actualizarUsuario") return actualizarUsuario(datos.id, datos.changes || datos.cambios);
+    if (accion === "eliminarUsuario") return eliminarUsuario(datos.id);
     if (accion === "listarUsuarios") return { ok: true, datos: listarUsuarios() };
+    
     if (accion === "crear") return crearCliente(datos);
     if (accion === "leerTodos") { var c = leerTodosLosClientes(datos.embajador); return { ok: true, datos: c }; }
     if (accion === "buscarNombre") { var r = buscarClientesPorNombre(datos.nombre); return { ok: true, datos: r }; }
@@ -1098,56 +1092,6 @@ function _ejecutarAccion(accion, datos) {
   }
 }
 
-/**
- * Punto de entrada HTTP POST para operaciones CRUD desde el frontend.
- * El frontend envía: { accion, datos }
- * Responde con JSON: { ok, mensaje, datos }
- *
- * @param {Object} e - Evento de solicitud POST.
- * @returns {TextOutput} JSON de respuesta.
- */
-function doPost(e) {
-  try {
-    var body = JSON.parse(e.postData.contents);
-    var accion = body.accion;
-    var datos = body.datos || {};
-    var resultado;
-
-    if (accion === "crear") {
-      resultado = crearCliente(datos);
-    } else if (accion === "leerTodos") {
-      var clientes = leerTodosLosClientes(datos.embajador);
-      resultado = { ok: true, datos: clientes };
-    } else if (accion === "buscarNombre") {
-      var res = buscarClientesPorNombre(datos.nombre);
-      resultado = { ok: true, datos: res };
-    } else if (accion === "leerFila") {
-      var lead = leerClientePorFila(datos.fila);
-      resultado = { ok: !!lead, datos: lead };
-    } else if (accion === "actualizar") {
-      resultado = actualizarCliente(datos.fila, datos.cambios);
-    } else if (accion === "actualizarEtapa") {
-      resultado = actualizarEtapa(datos.fila, datos.etapa);
-    } else if (accion === "agregarNota") {
-      resultado = agregarNota(datos.fila, datos.nota);
-    } else if (accion === "eliminar") {
-      resultado = eliminarCliente(datos.fila);
-    } else if (accion === "kpis") {
-      var kpis = obtenerKPIs();
-      resultado = { ok: true, datos: kpis };
-    } else if (accion === "inicializar") {
-      inicializarHoja();
-      resultado = { ok: true, mensaje: "Hoja inicializada." };
-    } else {
-      resultado = { ok: false, mensaje: "Accion desconocida: " + accion };
-    }
-
-    return ContentService
-      .createTextOutput(JSON.stringify(resultado))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (err) {
-    return ContentService
       .createTextOutput(JSON.stringify({ ok: false, mensaje: "Error servidor: " + err.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
@@ -1567,41 +1511,6 @@ function getHtmlContent() {
 '</html>';
 }
 
-/**
- * Función puente llamada desde el frontend HTML via google.script.run.
- * Parsea la accion JSON y despacha a la función CRUD correspondiente.
- *
- * @param {string} payloadJson - JSON string con { accion, datos }
- * @returns {Object} Resultado de la operación.
- */
-function procesarAccion(payloadJson) {
-  try {
-    var body = JSON.parse(payloadJson);
-    var accion = body.accion;
-    var datos = body.datos || {};
-
-    if (accion === "crearUsuario") return crearUsuario(datos);
-    if (accion === "actualizarUsuario") return actualizarUsuario(datos.id, datos.changes || datos.cambios);
-    if (accion === "eliminarUsuario") return eliminarUsuario(datos.id);
-    if (accion === "listarUsuarios") return { ok: true, datos: listarUsuarios() };
-    if (accion === "login") return login(datos.email, datos.password);
-
-    if (accion === "crear") return crearCliente(datos);
-    if (accion === "leerTodos") { var c = leerTodosLosClientes(datos.embajador); return { ok: true, datos: c }; }
-    if (accion === "buscarNombre") { var r = buscarClientesPorNombre(datos.nombre); return { ok: true, datos: r }; }
-    if (accion === "leerFila") { var lead = leerClientePorFila(datos.fila); return { ok: !!lead, datos: lead }; }
-    if (accion === "actualizar") return actualizarCliente(datos.fila, datos.cambios);
-    if (accion === "actualizarEtapa") return actualizarEtapa(datos.fila, datos.etapa);
-    if (accion === "agregarNota") return agregarNota(datos.fila, datos.nota);
-    if (accion === "eliminar") return eliminarCliente(datos.fila);
-    if (accion === "kpis") { var k = obtenerKPIs(); return { ok: true, datos: k }; }
-    if (accion === "inicializar") { inicializarHoja(); return { ok: true, mensaje: "Hoja inicializada." }; }
-
-    return { ok: false, mensaje: "Accion desconocida: " + accion };
-  } catch (err) {
-    return { ok: false, mensaje: "Error: " + err.message };
-  }
-}
 
 /**
  * Muestra la Web App como panel lateral (sidebar) en el Spreadsheet.
@@ -1666,10 +1575,36 @@ function listarUsuariosRaw() {
 }
 
 function crearUsuario(datos, ignoreAdminCheck) {
-  // En producción, aquí verificaríamos si el llamador es ADMIN
   const sheet = getUsuariosSheet();
   const id = _generarId();
   const row = [id, datos.email, datos.password, datos.nombre, datos.rol || "USER", "Si"];
   sheet.appendRow(row);
   return { ok: true, mensaje: "Usuario creado exitosamente" };
+}
+
+function actualizarUsuario(id, cambios) {
+  const sheet = getUsuariosSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: false, mensaje: "No hay usuarios" };
+  const ids = sheet.getRange(2, 1, last - 1, 1).getValues().map(r => r[0]);
+  const idx = ids.indexOf(id);
+  if (idx === -1) return { ok: false, mensaje: "Usuario no encontrado" };
+  const fila = idx + 2;
+  if (cambios.nombre) sheet.getRange(fila, 4).setValue(cambios.nombre);
+  if (cambios.rol) sheet.getRange(fila, 5).setValue(cambios.rol);
+  if (cambios.activo) sheet.getRange(fila, 6).setValue(cambios.activo);
+  if (cambios.password) sheet.getRange(fila, 3).setValue(cambios.password);
+  if (cambios.email) sheet.getRange(fila, 2).setValue(cambios.email);
+  return { ok: true, mensaje: "Usuario actualizado" };
+}
+
+function eliminarUsuario(id) {
+  const sheet = getUsuariosSheet();
+  const last = sheet.getLastRow();
+  if (last < 2) return { ok: false, mensaje: "No hay usuarios" };
+  const ids = sheet.getRange(2, 1, last - 1, 1).getValues().map(r => r[0]);
+  const idx = ids.indexOf(id);
+  if (idx === -1) return { ok: false, mensaje: "Usuario no encontrado" };
+  sheet.deleteRow(idx + 2);
+  return { ok: true, mensaje: "Usuario eliminado" };
 }

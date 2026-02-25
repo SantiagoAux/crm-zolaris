@@ -8,6 +8,17 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isReadonly, setIsReadonly] = useState(true);
+
+    // Force clear and unlock on mount
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setEmail("");
+            setPassword("");
+            setIsReadonly(false);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, []);
 
     if (user) return <Navigate to="/" replace />;
 
@@ -52,6 +63,8 @@ const Login = () => {
                                     type="text"
                                     name="user_email_crm"
                                     required
+                                    readOnly={isReadonly}
+                                    onFocus={(e) => (e.target.readOnly = false)}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="MONOZAM"
@@ -68,6 +81,8 @@ const Login = () => {
                                     type="password"
                                     name="user_pass_crm"
                                     required
+                                    readOnly={isReadonly}
+                                    onFocus={(e) => (e.target.readOnly = false)}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
